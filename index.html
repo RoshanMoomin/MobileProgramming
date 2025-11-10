@@ -1,37 +1,57 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <title>Football Leagues</title>
-    </head>
-    <body style="background-color:aqua; margin:0; padding:20px; font-family: Arial, sans-serif;">
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Roshan’s Math Actions</title>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="roshan.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background-color: #f1f1f1;
+      padding: 30px;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 8px;
+      border: none;
+      border-radius: 8px;
+      background-color: #007bff;
+      color: white;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .output {
+      display: none;
+      margin-top: 15px;
+      font-size: 18px;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
 
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; flex-wrap: wrap;">
+  <h2>Roshan's Math Buttons</h2>
 
-            <div class="group1" style="background-color: #ff9999; padding:10px; border: 5px solid #ff0000; border-radius: 5px;">
-                LALIGA
-                <div class="club1" style="background-color: #003399; color:white; padding:200px; border: yellow; border-radius: 10px;">Barcelona</div>
-                <div class="club2" style="background-color: #ffffff; color:black; padding:200px; border: black; border-radius: 10px;">Real Madrid</div>
-            </div>
+  <button id="addBtn">Roshan Addition</button>
+  <div id="addOutput" class="output"></div>
 
-            <div class="group2" style="background-color: #99ccff; padding:10px; border: 5px double #0000ff; border-radius: 5px;">
-                PREMIER LEAGUE
-                <div class="club1" style="background-color: #da291c; color:white; padding:200px; border: 2px solid white; border-radius: 5px;">Man United</div>
-                <div class="club2" style="background-color: #6cabdd; color:white; padding:200px; border: 2px dashed black; border-radius: 5px;">Man City</div>
-            </div>
+  <button id="subBtn">Roshan Subtraction</button>
+  <div id="subOutput" class="output"></div>
 
-            <div class="group3" style="background-color: #99ff99; padding:10px; border: 4px solid green; border-radius: 5px;">
-                SERIE A
-                <div class="club1" style="background-color: #0047ab; color:white; padding:200px; border: 2px dotted yellow; border-radius: 5px;">Inter Milan</div>
-                <div class="club2" style="background-color: #ff0000; color:white; padding:200px; border: 2px solid black; border-radius: 5px;">AC Milan</div>
-            </div>
+  <button id="mulBtn">Roshan Multiplication</button>
+  <div id="mulOutput" class="output"></div>
 
-            <div class="group4" style="background-color: #ffcc99; padding:10px; border: 5px solid orange; border-radius: 5px;">
-                LIGUE 1
-                <div class="club1" style="background-color: #003366; color:white; padding:200px; border: 4px dashed white; border-radius: 5px;">Paris Saint Germain</div>
-                <div class="club2" style="background-color: #ff6600; color:white; padding:200px; border: 3px dotted black; border-radius: 5px;">Lyon</div>
-            </div>
+  <button id="divBtn">Roshan Division</button>
+  <div id="divOutput" class="output"></div>
 
-        </div>
+  <button id="msgBtn">Roshan Message</button>
+  <div id="msgOutput" class="output"></div>
 
-    </body>
+</body>
 </html>
