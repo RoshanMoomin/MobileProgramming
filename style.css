@@ -17,6 +17,7 @@ body {
     align-items: center;
     position: fixed;
     top: 0;
+    z-index: 1000;
 }
 
 .logo {
@@ -59,6 +60,7 @@ body {
         position: absolute;
         top: 60px;
         left: 0;
+        z-index: 1001; /* menu above everything */
     }
 
     .nav-links li {
@@ -78,7 +80,8 @@ body {
     border-radius: 15px;
     position: relative;
     transition: 0.3s;
-    box-shadow: 0 5px 25px rgba(0,0,0,0.3);
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.3);
+    z-index: 1;
 }
 
 #animateBtn {
