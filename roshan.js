@@ -1,72 +1,23 @@
+$(document).ready(function () {
 
-function toggleContainer1() {
-  const text = document.getElementById("toggleText1");
-  const button = event.target;
- 
-}
+  const $navLinks = $("#navLinks");
+  const $hamburger = $("#hamburgerBtn");
 
-function showSum() {
-  let roshan = 5;
-  let marasini = 6;
-  const sum = roshan + marasini;
-  const result = document.getElementById("sumResult");
-  result.textContent = `The sum of ${roshan} + ${marasini} is ${sum}.`;
-}
-$(document).ready(function() {
-  let addVisible = false;
-  let subVisible = false;
-  let mulVisible = false;
-  let divVisible = false;
-  let msgVisible = false;
-
-  $("#addBtn").click(function() {
-    if (!addVisible) {
-      $("#addOutput").text("23 + 2 = " + (23 + 2)).show();
-      addVisible = true;
-    } else {
-      $("#addOutput").hide();
-      addVisible = false;
-    }
+  // hamburger toggle
+  $hamburger.click(function () {
+    $navLinks.stop(true, true).slideToggle(250);
   });
 
-  $("#subBtn").click(function() {
-    if (!subVisible) {
-      $("#subOutput").text("23 - 2 = " + (23 - 2)).show();
-      subVisible = true;
+  // fix menu when resizing back to large screen
+  function fixMenu() {
+    if ($(window).width() > 700) {
+      $navLinks.show();
+      $navLinks.css("display", "flex");
     } else {
-      $("#subOutput").hide();
-      subVisible = false;
+      $navLinks.hide();
     }
-  });
+  }
 
-  $("#mulBtn").click(function() {
-    if (!mulVisible) {
-      $("#mulOutput").text("7 × 3 = " + (7 * 3)).show();
-      mulVisible = true;
-    } else {
-      $("#mulOutput").hide();
-      mulVisible = false;
-    }
-  });
-
-  $("#divBtn").click(function() {
-    if (!divVisible) {
-      $("#divOutput").text("20 ÷ 4 = " + (20 / 4)).show();
-      divVisible = true;
-    } else {
-      $("#divOutput").hide();
-      divVisible = false;
-    }
-  });
-
-  $("#msgBtn").click(function() {
-    if (!msgVisible) {
-      $("#msgOutput").text("Roshan loves to travel and learn.").show();
-      msgVisible = true;
-    } else {
-      $("#msgOutput").hide();
-      msgVisible = false;
-    }
-  });
+  fixMenu();
+  $(window).on("resize", fixMenu);
 });
-
