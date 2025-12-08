@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -12,19 +12,85 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
   Alert,
+  FlatList,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { Picker } from "@react-native-picker/picker"; // dropdown picker
+
+// Firebase
+import { db } from "./firebase";
+import { ref, set, onValue } from "firebase/database";
 
 export default function App() {
   const [menuVisible, setMenuVisible] = useState(false);
   const [search, setSearch] = useState("");
 
+  // ---------- Form State ----------
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [gender, setGender] = useState("Male");
+  const [age, setAge] = useState("");
+  const [interest, setInterest] = useState("");
+  const [notes, setNotes] = useState("");
+
+  // ---------- Database State ----------
+  const [users, setUsers] = useState([]);
+
+  // ---------- Save Function ----------
+  const saveToDatabase = () => {
+    if (!name || !email) {
+      Alert.alert("Error", "Please enter at least Name and Email");
+      return;
+    }
+
+    const userRef = ref(db, "users/" + Date.now());
+
+    set(userRef, {
+      name,
+      email,
+      phone,
+      address,
+      gender,
+      age,
+      interest,
+      notes,
+      createdAt: new Date().toISOString(),
+    })
+      .then(() => {
+        Alert.alert("Success", "Data saved to Firebase!");
+        setName("");
+        setEmail("");
+        setPhone("");
+        setAddress("");
+        setGender("Male");
+        setAge("");
+        setInterest("");
+        setNotes("");
+      })
+      .catch((error) => Alert.alert("Error", error.message));
+  };
+
+  // ---------- Fetch Data from Firebase ----------
+  useEffect(() => {
+    const usersRef = ref(db, "users/");
+    onValue(usersRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const parsed = Object.keys(data).map((key) => ({ id: key, ...data[key] }));
+        setUsers(parsed.reverse()); // latest first
+      } else {
+        setUsers([]);
+      }
+    });
+  }, []);
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.container}>
-
-          {/* ------------------ NAVBAR ------------------ */}
+          {/* ---------- Navbar ---------- */}
           <View style={styles.navbar}>
             <View style={styles.brandRow}>
               <Image
@@ -35,22 +101,19 @@ export default function App() {
               />
               <Text style={styles.logoText}>MoomTech</Text>
             </View>
-
             <TouchableOpacity onPress={() => setMenuVisible(true)}>
               <Ionicons name="menu" size={32} color="black" />
             </TouchableOpacity>
           </View>
 
-          {/* ------------------ HAMBURGER MENU ------------------ */}
+          {/* ---------- Hamburger Menu ---------- */}
           <Modal visible={menuVisible} transparent animationType="slide">
             <TouchableOpacity
               style={styles.overlay}
               onPress={() => setMenuVisible(false)}
             />
-
             <View style={styles.sideMenu}>
               <Text style={styles.menuHeading}>Menu</Text>
-
               {["Home", "Categories", "Offers", "Profile", "Settings"].map(
                 (item) => (
                   <TouchableOpacity
@@ -65,13 +128,11 @@ export default function App() {
             </View>
           </Modal>
 
-          {/* ------------------ PAGE CONTENT ------------------ */}
+          {/* ---------- Page Content ---------- */}
           <ScrollView contentContainerStyle={styles.pageContent}>
-            <Text style={styles.heading}>
-              Find the Best Electronic Gadgets
-            </Text>
+            <Text style={styles.heading}>Find the Best Electronic Gadgets</Text>
 
-            {/* ------------------ SEARCH BAR ------------------ */}
+            {/* ---------- Search Bar ---------- */}
             <View style={styles.searchBox}>
               <Ionicons name="search" size={22} color="#888" />
               <TextInput
@@ -82,81 +143,143 @@ export default function App() {
               />
             </View>
 
-            {/* ------------------ CATEGORY GRID ------------------ */}
-            <Text style={styles.subHeading}>Categories</Text>
-
-            <View style={styles.grid}>
-
-              <CategoryCard
-                title="Mobile Phones"
-                image="https://m.media-amazon.com/images/I/61cwywLZR-L._AC_UF1000,1000_QL80_.jpg"
+            {/* ---------- Extended Form ---------- */}
+            <Text style={styles.subHeading}>Register / Submit Info</Text>
+            <View style={styles.formBox}>
+              <TextInput
+                placeholder="Full Name"
+                style={styles.formInput}
+                value={name}
+                onChangeText={setName}
               />
-
-              <CategoryCard
-                title="Laptops"
-                image="https://m.media-amazon.com/images/I/71TPda7cwUL._AC_UF1000,1000_QL80_.jpg"
+              <TextInput
+                placeholder="Email"
+                style={styles.formInput}
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
               />
-
-              <CategoryCard
-                title="Smart Watches"
-                image="https://m.media-amazon.com/images/I/61sZfcz2bnL._AC_UF1000,1000_QL80_.jpg"
+              <TextInput
+                placeholder="Phone Number"
+                style={styles.formInput}
+                value={phone}
+                onChangeText={setPhone}
+                keyboardType="phone-pad"
               />
-
-              <CategoryCard
-                title="Accessories"
-                image="https://m.media-amazon.com/images/I/61Fh2wKnwyL._AC_SL1500_.jpg"
+              <TextInput
+                placeholder="Address"
+                style={styles.formInput}
+                value={address}
+                onChangeText={setAddress}
               />
-
-              <CategoryCard
-                title="Headphones"
-                image="https://m.media-amazon.com/images/I/71o8Q5XJS5L.__AC_SX300_SY300_QL70_FMwebp_.jpg"
+              {/* Gender Picker */}
+              <View style={styles.pickerContainer}>
+                <Picker
+                  selectedValue={gender}
+                  onValueChange={(val) => setGender(val)}
+                >
+                  <Picker.Item label="Male" value="Male" />
+                  <Picker.Item label="Female" value="Female" />
+                  <Picker.Item label="Other" value="Other" />
+                </Picker>
+              </View>
+              <TextInput
+                placeholder="Age"
+                style={styles.formInput}
+                value={age}
+                onChangeText={setAge}
+                keyboardType="numeric"
               />
-
-              <CategoryCard
-                title="Gaming"
-                image="https://m.media-amazon.com/images/I/61-PblYntsL._AC_SL1500_.jpg"
+              <TextInput
+                placeholder="Product Interest"
+                style={styles.formInput}
+                value={interest}
+                onChangeText={setInterest}
               />
+              <TextInput
+                placeholder="Additional Notes"
+                style={[styles.formInput, { height: 80 }]}
+                value={notes}
+                onChangeText={setNotes}
+                multiline
+              />
+              <TouchableOpacity style={styles.specialBtn} onPress={saveToDatabase}>
+                <Text style={styles.specialBtnText}>Save to Firebase</Text>
+              </TouchableOpacity>
             </View>
 
-            {/* ------------------ SPECIAL BUTTON ------------------ */}
-            <TouchableOpacity
-              style={styles.specialBtn}
-              onPress={() => Alert.alert("Signed In Successfully")}
-            >
-              <Text style={styles.specialBtnText}>Sign In Test Button</Text>
-            </TouchableOpacity>
-          </ScrollView>
+            {/* ---------- Display Saved Users ---------- */}
+            <Text style={styles.subHeading}>Submitted Entries</Text>
+            <FlatList
+              data={users}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => (
+                <View style={styles.userCard}>
+                  <Text style={styles.userText}>
+                    <Text style={{ fontWeight: "700" }}>Name:</Text> {item.name}
+                  </Text>
+                  <Text style={styles.userText}>
+                    <Text style={{ fontWeight: "700" }}>Email:</Text> {item.email}
+                  </Text>
+                  {item.phone ? (
+                    <Text style={styles.userText}>
+                      <Text style={{ fontWeight: "700" }}>Phone:</Text> {item.phone}
+                    </Text>
+                  ) : null}
+                  {item.address ? (
+                    <Text style={styles.userText}>
+                      <Text style={{ fontWeight: "700" }}>Address:</Text> {item.address}
+                    </Text>
+                  ) : null}
+                  <Text style={styles.userText}>
+                    <Text style={{ fontWeight: "700" }}>Gender:</Text> {item.gender}
+                  </Text>
+                  {item.age ? (
+                    <Text style={styles.userText}>
+                      <Text style={{ fontWeight: "700" }}>Age:</Text> {item.age}
+                    </Text>
+                  ) : null}
+                  {item.interest ? (
+                    <Text style={styles.userText}>
+                      <Text style={{ fontWeight: "700" }}>Interest:</Text> {item.interest}
+                    </Text>
+                  ) : null}
+                  {item.notes ? (
+                    <Text style={styles.userText}>
+                      <Text style={{ fontWeight: "700" }}>Notes:</Text> {item.notes}
+                    </Text>
+                  ) : null}
+                  <Text style={styles.userText}>
+                    <Text style={{ fontWeight: "700" }}>Submitted At:</Text>{" "}
+                    {new Date(item.createdAt).toLocaleString()}
+                  </Text>
+                </View>
+              )}
+            />
 
+          </ScrollView>
         </View>
       </TouchableWithoutFeedback>
     </SafeAreaView>
   );
 }
 
-/* ------------------ CATEGORY CARD COMPONENT ------------------ */
-const CategoryCard = ({ title, image }) => {
-  return (
-    <TouchableOpacity
-      style={styles.card}
-      onPress={() => Alert.alert(title, "Opening " + title)}
-    >
-      <Image source={{ uri: image }} style={styles.cardImage} />
-      <Text style={styles.cardText}>{title}</Text>
-    </TouchableOpacity>
-  );
-};
+// ---------- CATEGORY CARD ----------
+const CategoryCard = ({ title, image }) => (
+  <TouchableOpacity
+    style={styles.card}
+    onPress={() => Alert.alert(title, "Opening " + title)}
+  >
+    <Image source={{ uri: image }} style={styles.cardImage} />
+    <Text style={styles.cardText}>{title}</Text>
+  </TouchableOpacity>
+);
 
-/* ---------------------------- STYLES ---------------------------- */
+// ---------- STYLES ----------
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: "#F6F8FA",
-  },
-  container: {
-    flex: 1,
-  },
+  safeArea: { flex: 1, backgroundColor: "#F6F8FA" },
+  container: { flex: 1 },
 
-  /* NAVBAR */
   navbar: {
     height: 65,
     backgroundColor: "white",
@@ -170,29 +293,10 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     elevation: 6,
   },
-
-  brandRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-
-  logo: {
-    width: 35,
-    height: 35,
-  },
-
-  logoText: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: "#007AFF",
-  },
-
-  overlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-  },
-
+  brandRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  logo: { width: 35, height: 35 },
+  logoText: { fontSize: 22, fontWeight: "700", color: "#007AFF" },
+  overlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)" },
   sideMenu: {
     width: "65%",
     height: "100%",
@@ -203,31 +307,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     elevation: 20,
   },
-
-  menuHeading: {
-    fontSize: 24,
-    fontWeight: "700",
-    marginBottom: 20,
-  },
-
-  menuItem: {
-    marginVertical: 12,
-  },
-
-  menuText: {
-    fontSize: 18,
-  },
-
-  pageContent: {
-    padding: 20,
-  },
-
-  heading: {
-    fontSize: 22,
-    fontWeight: "700",
-    marginBottom: 15,
-  },
-
+  menuHeading: { fontSize: 24, fontWeight: "700", marginBottom: 20 },
+  menuItem: { marginVertical: 12 },
+  menuText: { fontSize: 18 },
+  pageContent: { padding: 20 },
+  heading: { fontSize: 22, fontWeight: "700", marginBottom: 15 },
   searchBox: {
     backgroundColor: "white",
     padding: 12,
@@ -236,31 +320,40 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
     marginBottom: 20,
-
     shadowColor: "#000",
     shadowOpacity: 0.1,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
     elevation: 4,
   },
+  searchInput: { flex: 1, fontSize: 16 },
+  subHeading: { fontSize: 18, fontWeight: "600", marginBottom: 15 },
 
-  searchInput: {
-    flex: 1,
+  formBox: {
+    backgroundColor: "white",
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 20,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 3 },
+    shadowRadius: 6,
+    elevation: 5,
+  },
+  formInput: {
+    backgroundColor: "#f2f2f2",
+    padding: 14,
+    borderRadius: 8,
+    marginBottom: 12,
     fontSize: 16,
   },
-
-  subHeading: {
-    fontSize: 18,
-    fontWeight: "600",
-    marginBottom: 15,
+  pickerContainer: {
+    backgroundColor: "#f2f2f2",
+    borderRadius: 8,
+    marginBottom: 12,
   },
 
-  grid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-  },
-
+  grid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between" },
   card: {
     width: "47%",
     backgroundColor: "white",
@@ -268,37 +361,18 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     padding: 10,
     alignItems: "center",
-
     shadowColor: "#000",
     shadowOpacity: 0.1,
     shadowOffset: { width: 0, height: 3 },
     shadowRadius: 6,
     elevation: 5,
   },
+  cardImage: { width: "100%", height: 120, borderRadius: 10 },
+  cardText: { marginTop: 10, fontSize: 16, fontWeight: "600" },
 
-  cardImage: {
-    width: "100%",
-    height: 120,
-    borderRadius: 10,
-  },
+  specialBtn: { marginTop: 10, backgroundColor: "#007AFF", padding: 15, borderRadius: 10, alignItems: "center" },
+  specialBtnText: { fontSize: 18, color: "white", fontWeight: "700" },
 
-  cardText: {
-    marginTop: 10,
-    fontSize: 16,
-    fontWeight: "600",
-  },
-
-  specialBtn: {
-    marginTop: 20,
-    backgroundColor: "#007AFF",
-    padding: 15,
-    borderRadius: 10,
-    alignItems: "center",
-  },
-
-  specialBtnText: {
-    fontSize: 18,
-    color: "white",
-    fontWeight: "700",
-  },
+  userCard: { backgroundColor: "white", padding: 15, borderRadius: 10, marginBottom: 12 },
+  userText: { fontSize: 14, marginBottom: 2 },
 });
