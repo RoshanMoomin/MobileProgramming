@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -12,85 +12,48 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
   Alert,
-  FlatList,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { Picker } from "@react-native-picker/picker"; // dropdown picker
 
-// Firebase
-import { db } from "./firebase";
-import { ref, set, onValue } from "firebase/database";
+import { db } from "./firebase"; // Your firebase.js file
+import { ref, set } from "firebase/database";
 
 export default function App() {
   const [menuVisible, setMenuVisible] = useState(false);
-  const [search, setSearch] = useState("");
+  const [page, setPage] = useState("home"); // "home" or "login"
 
-  // ---------- Form State ----------
-  const [name, setName] = useState("");
+  // Login form state
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [address, setAddress] = useState("");
-  const [gender, setGender] = useState("Male");
-  const [age, setAge] = useState("");
-  const [interest, setInterest] = useState("");
-  const [notes, setNotes] = useState("");
+  const [password, setPassword] = useState("");
 
-  // ---------- Database State ----------
-  const [users, setUsers] = useState([]);
-
-  // ---------- Save Function ----------
-  const saveToDatabase = () => {
-    if (!name || !email) {
-      Alert.alert("Error", "Please enter at least Name and Email");
+  const handleLogin = () => {
+    if (!email || !password) {
+      Alert.alert("Error", "Please enter email and password");
       return;
     }
 
     const userRef = ref(db, "users/" + Date.now());
-
     set(userRef, {
-      name,
       email,
-      phone,
-      address,
-      gender,
-      age,
-      interest,
-      notes,
+      password,
       createdAt: new Date().toISOString(),
     })
       .then(() => {
-        Alert.alert("Success", "Data saved to Firebase!");
-        setName("");
+        Alert.alert("Success", "User saved to Firebase!");
         setEmail("");
-        setPhone("");
-        setAddress("");
-        setGender("Male");
-        setAge("");
-        setInterest("");
-        setNotes("");
+        setPassword("");
       })
-      .catch((error) => Alert.alert("Error", error.message));
+      .catch((error) => {
+        Alert.alert("Error", error.message);
+      });
   };
-
-  // ---------- Fetch Data from Firebase ----------
-  useEffect(() => {
-    const usersRef = ref(db, "users/");
-    onValue(usersRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        const parsed = Object.keys(data).map((key) => ({ id: key, ...data[key] }));
-        setUsers(parsed.reverse()); // latest first
-      } else {
-        setUsers([]);
-      }
-    });
-  }, []);
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.container}>
-          {/* ---------- Navbar ---------- */}
+
+          {/* ------------------ NAVBAR ------------------ */}
           <View style={styles.navbar}>
             <View style={styles.brandRow}>
               <Image
@@ -101,25 +64,32 @@ export default function App() {
               />
               <Text style={styles.logoText}>MoomTech</Text>
             </View>
+
             <TouchableOpacity onPress={() => setMenuVisible(true)}>
               <Ionicons name="menu" size={32} color="black" />
             </TouchableOpacity>
           </View>
 
-          {/* ---------- Hamburger Menu ---------- */}
+          {/* ------------------ HAMBURGER MENU ------------------ */}
           <Modal visible={menuVisible} transparent animationType="slide">
             <TouchableOpacity
               style={styles.overlay}
               onPress={() => setMenuVisible(false)}
             />
+
             <View style={styles.sideMenu}>
               <Text style={styles.menuHeading}>Menu</Text>
-              {["Home", "Categories", "Offers", "Profile", "Settings"].map(
+
+              {["Home", "Categories", "Offers", "Profile", "Login"].map(
                 (item) => (
                   <TouchableOpacity
                     key={item}
                     style={styles.menuItem}
-                    onPress={() => Alert.alert(item, item + " clicked")}
+                    onPress={() => {
+                      setMenuVisible(false);
+                      if (item === "Login") setPage("login");
+                      else setPage("home"); // can be customized
+                    }}
                   >
                     <Text style={styles.menuText}>{item}</Text>
                   </TouchableOpacity>
@@ -128,135 +98,99 @@ export default function App() {
             </View>
           </Modal>
 
-          {/* ---------- Page Content ---------- */}
+          {/* ------------------ PAGE CONTENT ------------------ */}
           <ScrollView contentContainerStyle={styles.pageContent}>
-            <Text style={styles.heading}>Find the Best Electronic Gadgets</Text>
+            {page === "home" ? (
+              <>
+                <Text style={styles.heading}>
+                  Find the Best Electronic Gadgets
+                </Text>
 
-            {/* ---------- Search Bar ---------- */}
-            <View style={styles.searchBox}>
-              <Ionicons name="search" size={22} color="#888" />
-              <TextInput
-                placeholder="Search gadgets..."
-                style={styles.searchInput}
-                value={search}
-                onChangeText={setSearch}
-              />
-            </View>
-
-            {/* ---------- Extended Form ---------- */}
-            <Text style={styles.subHeading}>Register / Submit Info</Text>
-            <View style={styles.formBox}>
-              <TextInput
-                placeholder="Full Name"
-                style={styles.formInput}
-                value={name}
-                onChangeText={setName}
-              />
-              <TextInput
-                placeholder="Email"
-                style={styles.formInput}
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-              />
-              <TextInput
-                placeholder="Phone Number"
-                style={styles.formInput}
-                value={phone}
-                onChangeText={setPhone}
-                keyboardType="phone-pad"
-              />
-              <TextInput
-                placeholder="Address"
-                style={styles.formInput}
-                value={address}
-                onChangeText={setAddress}
-              />
-              {/* Gender Picker */}
-              <View style={styles.pickerContainer}>
-                <Picker
-                  selectedValue={gender}
-                  onValueChange={(val) => setGender(val)}
-                >
-                  <Picker.Item label="Male" value="Male" />
-                  <Picker.Item label="Female" value="Female" />
-                  <Picker.Item label="Other" value="Other" />
-                </Picker>
-              </View>
-              <TextInput
-                placeholder="Age"
-                style={styles.formInput}
-                value={age}
-                onChangeText={setAge}
-                keyboardType="numeric"
-              />
-              <TextInput
-                placeholder="Product Interest"
-                style={styles.formInput}
-                value={interest}
-                onChangeText={setInterest}
-              />
-              <TextInput
-                placeholder="Additional Notes"
-                style={[styles.formInput, { height: 80 }]}
-                value={notes}
-                onChangeText={setNotes}
-                multiline
-              />
-              <TouchableOpacity style={styles.specialBtn} onPress={saveToDatabase}>
-                <Text style={styles.specialBtnText}>Save to Firebase</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* ---------- Display Saved Users ---------- */}
-            <Text style={styles.subHeading}>Submitted Entries</Text>
-            <FlatList
-              data={users}
-              keyExtractor={(item) => item.id}
-              renderItem={({ item }) => (
-                <View style={styles.userCard}>
-                  <Text style={styles.userText}>
-                    <Text style={{ fontWeight: "700" }}>Name:</Text> {item.name}
-                  </Text>
-                  <Text style={styles.userText}>
-                    <Text style={{ fontWeight: "700" }}>Email:</Text> {item.email}
-                  </Text>
-                  {item.phone ? (
-                    <Text style={styles.userText}>
-                      <Text style={{ fontWeight: "700" }}>Phone:</Text> {item.phone}
-                    </Text>
-                  ) : null}
-                  {item.address ? (
-                    <Text style={styles.userText}>
-                      <Text style={{ fontWeight: "700" }}>Address:</Text> {item.address}
-                    </Text>
-                  ) : null}
-                  <Text style={styles.userText}>
-                    <Text style={{ fontWeight: "700" }}>Gender:</Text> {item.gender}
-                  </Text>
-                  {item.age ? (
-                    <Text style={styles.userText}>
-                      <Text style={{ fontWeight: "700" }}>Age:</Text> {item.age}
-                    </Text>
-                  ) : null}
-                  {item.interest ? (
-                    <Text style={styles.userText}>
-                      <Text style={{ fontWeight: "700" }}>Interest:</Text> {item.interest}
-                    </Text>
-                  ) : null}
-                  {item.notes ? (
-                    <Text style={styles.userText}>
-                      <Text style={{ fontWeight: "700" }}>Notes:</Text> {item.notes}
-                    </Text>
-                  ) : null}
-                  <Text style={styles.userText}>
-                    <Text style={{ fontWeight: "700" }}>Submitted At:</Text>{" "}
-                    {new Date(item.createdAt).toLocaleString()}
-                  </Text>
+                {/* ------------------ SEARCH BAR ------------------ */}
+                <View style={styles.searchBox}>
+                  <Ionicons name="search" size={22} color="#888" />
+                  <TextInput
+                    placeholder="Search gadgets..."
+                    style={styles.searchInput}
+                  />
                 </View>
-              )}
-            />
 
+                {/* ------------------ CATEGORY GRID ------------------ */}
+                <Text style={styles.subHeading}>Categories</Text>
+
+                <View style={styles.grid}>
+                  <CategoryCard
+                    title="Mobile Phones"
+                    image="https://m.media-amazon.com/images/I/61cwywLZR-L._AC_UF1000,1000_QL80_.jpg"
+                  />
+                  <CategoryCard
+                    title="Laptops"
+                    image="https://m.media-amazon.com/images/I/71TPda7cwUL._AC_UF1000,1000_QL80_.jpg"
+                  />
+                  <CategoryCard
+                    title="Smart Watches"
+                    image="https://m.media-amazon.com/images/I/61sZfcz2bnL._AC_UF1000,1000_QL80_.jpg"
+                  />
+                  <CategoryCard
+                    title="Accessories"
+                    image="https://m.media-amazon.com/images/I/61Fh2wKnwyL._AC_SL1500_.jpg"
+                  />
+                  <CategoryCard
+                    title="Headphones"
+                    image="https://m.media-amazon.com/images/I/71o8Q5XJS5L.__AC_SX300_SY300_QL70_FMwebp_.jpg"
+                  />
+                  <CategoryCard
+                    title="Gaming"
+                    image="https://m.media-amazon.com/images/I/61-PblYntsL._AC_SL1500_.jpg"
+                  />
+                </View>
+
+                {/* ------------------ SPECIAL BUTTON ------------------ */}
+                <TouchableOpacity
+                  style={styles.specialBtn}
+                  onPress={() => Alert.alert("Signed In Successfully")}
+                >
+                  <Text style={styles.specialBtnText}>Sign In Test Button</Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                {/* ---------- LOGIN PAGE ---------- */}
+                <Text style={styles.subHeading}>Login</Text>
+                <View style={styles.formBox}>
+                  <TextInput
+                    style={styles.formInput}
+                    placeholder="Email"
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
+                  />
+                  <TextInput
+                    style={styles.formInput}
+                    placeholder="Password"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry
+                  />
+                  <TouchableOpacity
+                    style={styles.specialBtn}
+                    onPress={handleLogin}
+                  >
+                    <Text style={styles.specialBtnText}>Login & Save</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={{ marginTop: 15 }}
+                    onPress={() => setPage("home")}
+                  >
+                    <Text
+                      style={{ color: "#007AFF", textAlign: "center" }}
+                    >
+                      ← Back to Home
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
           </ScrollView>
         </View>
       </TouchableWithoutFeedback>
@@ -264,22 +198,28 @@ export default function App() {
   );
 }
 
-// ---------- CATEGORY CARD ----------
-const CategoryCard = ({ title, image }) => (
-  <TouchableOpacity
-    style={styles.card}
-    onPress={() => Alert.alert(title, "Opening " + title)}
-  >
-    <Image source={{ uri: image }} style={styles.cardImage} />
-    <Text style={styles.cardText}>{title}</Text>
-  </TouchableOpacity>
-);
+/* ------------------ CATEGORY CARD COMPONENT ------------------ */
+const CategoryCard = ({ title, image }) => {
+  return (
+    <TouchableOpacity
+      style={styles.card}
+      onPress={() => Alert.alert(title, "Opening " + title)}
+    >
+      <Image source={{ uri: image }} style={styles.cardImage} />
+      <Text style={styles.cardText}>{title}</Text>
+    </TouchableOpacity>
+  );
+};
 
-// ---------- STYLES ----------
+/* ---------------------------- STYLES ---------------------------- */
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#F6F8FA" },
-  container: { flex: 1 },
-
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#F6F8FA",
+  },
+  container: {
+    flex: 1,
+  },
   navbar: {
     height: 65,
     backgroundColor: "white",
@@ -328,31 +268,6 @@ const styles = StyleSheet.create({
   },
   searchInput: { flex: 1, fontSize: 16 },
   subHeading: { fontSize: 18, fontWeight: "600", marginBottom: 15 },
-
-  formBox: {
-    backgroundColor: "white",
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 20,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 3 },
-    shadowRadius: 6,
-    elevation: 5,
-  },
-  formInput: {
-    backgroundColor: "#f2f2f2",
-    padding: 14,
-    borderRadius: 8,
-    marginBottom: 12,
-    fontSize: 16,
-  },
-  pickerContainer: {
-    backgroundColor: "#f2f2f2",
-    borderRadius: 8,
-    marginBottom: 12,
-  },
-
   grid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between" },
   card: {
     width: "47%",
@@ -369,10 +284,22 @@ const styles = StyleSheet.create({
   },
   cardImage: { width: "100%", height: 120, borderRadius: 10 },
   cardText: { marginTop: 10, fontSize: 16, fontWeight: "600" },
-
-  specialBtn: { marginTop: 10, backgroundColor: "#007AFF", padding: 15, borderRadius: 10, alignItems: "center" },
+  specialBtn: {
+    marginTop: 20,
+    backgroundColor: "#007AFF",
+    padding: 15,
+    borderRadius: 10,
+    alignItems: "center",
+  },
   specialBtnText: { fontSize: 18, color: "white", fontWeight: "700" },
-
-  userCard: { backgroundColor: "white", padding: 15, borderRadius: 10, marginBottom: 12 },
-  userText: { fontSize: 14, marginBottom: 2 },
+  formBox: { marginTop: 10 },
+  formInput: {
+    backgroundColor: "white",
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 15,
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: "#ccc",
+  },
 });
